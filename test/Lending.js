@@ -10,8 +10,25 @@ describe('Lending', function () {
 	})
 
   it('Should deposit successfully', async () => {
-		const oneEth = 1000000000000000000n
+		const oneEth = BigInt('1000000000000000000')
     await lending.deposit({ value: oneEth })
 		expect(await lending.availableFunds()).to.eq(oneEth)
+  })
+
+  it('Should borrow funds successfully', async () => {
+    const [, borrower] = await ethers.getSigners()
+    const oneEth = BigInt('1000000000000000000')
+    await lending.deposit({ value: oneEth })
+    expect(await lending.availableFunds()).to.eq(oneEth)
+
+    const balance1 = await ethers.provider.getBalance(borrower.address)
+    lending = lending.connect(borrower)
+    const tx = await lending.borrow(oneEth / BigInt('2'))
+    const receipt = await tx.wait()
+    const gasUsed = receipt.gasUsed * receipt.gasPrice
+    const balance2 = await ethers.provider.getBalance(borrower.address)
+
+    expect(await lending.availableFunds()).to.eq(oneEth / BigInt('2'))
+    expect(balance2 + gasUsed).to.eq(balance1 + oneEth / BigInt('2'))
   })
 })

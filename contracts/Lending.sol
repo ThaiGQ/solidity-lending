@@ -22,4 +22,18 @@ contract Lending {
       require(msg.sender == depositor, 'You must be the depositor');
       availableFunds = availableFunds + msg.value;
   }
+
+  function borrow(uint256 _amount) public {
+    require(_amount > 0, 'Must borrow something');
+    require(availableFunds >= _amount, 'No funds available');
+    require(block.timestamp > loanStartTime + repayTime, 'Loan expired must be repayed first');
+
+      if (borrowed == 0) {
+          loanStartTime = block.timestamp;
+      }
+      availableFunds = availableFunds - _amount;
+      borrowed = borrowed + _amount;
+      isLoanActive = true;
+      payable(msg.sender).transfer(_amount);
+  }
 }
