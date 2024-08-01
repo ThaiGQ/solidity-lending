@@ -36,4 +36,33 @@ contract Lending {
       isLoanActive = true;
       payable(msg.sender).transfer(_amount);
   }
+
+  function repay() public payable {
+    require(isLoanActive, 'Must be an active loan');
+    uint256 amountToRepay = borrowed + (borrowed * interest / 100);
+    uint256 leftToPay = amountToRepay - repayed;
+    uint256 exceeding = 0;
+
+    if (msg.value > leftToPay) {
+        exceeding = msg.value - leftToPay;
+        isLoanActive = false;
+    } else if (msg.value == leftToPay) {
+        isLoanActive = false;
+    } else {
+        repayed = repayed + msg.value;
+    }
+
+    payable(depositor).transfer(msg.value - exceeding);
+    if (exceeding > 0) {
+        payable(msg.sender).transfer(exceeding);
+    }
+
+    // Reset everything
+    if (!isLoanActive) {
+        borrowed = 0;
+        availableFunds = 0;
+        repayed = 0;
+        loanStartTime = 0;
+    }
+  }
 }
